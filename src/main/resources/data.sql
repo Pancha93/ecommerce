@@ -21,17 +21,6 @@ SELECT 2, 'OpcionMenu', 'SistemadeGestiondeOrdenes.seguridad.persistence.entitie
     WHERE NOT EXISTS (SELECT 1 FROM tipo_objeto WHERE id=2);
 
 -- =====================================================
--- OBJETOS (ENTIDADES)
--- =====================================================
-INSERT INTO objeto (nombre_objeto, tipo_objeto_id)
-SELECT 'Ordenlaboratorio', 1
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Ordenlaboratorio');
-
-INSERT INTO objeto (nombre_objeto, tipo_objeto_id)
-SELECT 'ConfiguracionApi', 1
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='ConfiguracionApi');
-
--- =====================================================
 -- USUARIO ADMIN
 -- =====================================================
 INSERT INTO usuario (activo, correo, name, password, username)
@@ -70,66 +59,6 @@ SELECT 'deleteById', 'Permite eliminar registros'
 INSERT INTO accion (nombre, descripcion)
 SELECT 'ver', 'Permite ver opcion de menu'
     WHERE NOT EXISTS (SELECT 1 FROM accion WHERE nombre='ver');
-
--- =====================================================
--- OBJETOS OPCION MENU
--- =====================================================
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Home'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Home');
-
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Inicio'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Inicio');
-
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Ordenlaboratorio'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Ordenlaboratorio' AND tipo_objeto_id=2);
-
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Ver Ordenlaboratorio'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Ver Ordenlaboratorio');
-
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Gestionar Ordenlaboratorio'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Gestionar Ordenlaboratorio');
-
--- =====================================================
--- ACCION_OBJETO (RELACIÓN)
--- =====================================================
-INSERT INTO accion_objeto (accion_id, objeto_id)
-SELECT a.id, o.id
-FROM accion a
-         JOIN objeto o ON o.nombre_objeto='Ordenlaboratorio'
-WHERE a.nombre IN ('save','findAll','update','deleteById')
-  AND NOT EXISTS (
-    SELECT 1 FROM accion_objeto ao
-    WHERE ao.accion_id=a.id AND ao.objeto_id=o.id
-);
-
--- =====================================================
--- PRIVILEGIOS ADMIN
--- =====================================================
-INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
-SELECT true, ao.id, r.id, null
-FROM accion_objeto ao
-         JOIN rol r ON r.nombre='ADMINISTRADOR'
-WHERE NOT EXISTS (
-    SELECT 1 FROM privilegio p
-    WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
-);
-
--- =====================================================
--- PRIVILEGIOS CLIENTE (NEGADOS)
--- =====================================================
-INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
-SELECT false, ao.id, r.id, null
-FROM accion_objeto ao
-         JOIN rol r ON r.nombre='CLIENTE'
-WHERE NOT EXISTS (
-    SELECT 1 FROM privilegio p
-    WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
-);
 
 -- =====================================================
 -- EMAIL CONFIG
