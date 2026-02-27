@@ -14,4 +14,6 @@ public interface OrdenItemRepository extends JpaRepository<OrdenItem, Long> {
     List<OrdenItem> findByOrdenId(Long ordenId);
     
     void deleteByOrdenId(Long ordenId);
+    
+    boolean existsByProductoId(Long productoId);
 }

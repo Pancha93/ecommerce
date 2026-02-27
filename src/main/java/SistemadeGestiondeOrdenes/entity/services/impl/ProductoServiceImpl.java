@@ -7,6 +7,8 @@ import SistemadeGestiondeOrdenes.entity.entities.ProductoImagen;
 import SistemadeGestiondeOrdenes.entity.entities.Categoria;
 import SistemadeGestiondeOrdenes.entity.repositories.ProductoRepository;
 import SistemadeGestiondeOrdenes.entity.repositories.ProductoImagenRepository;
+import SistemadeGestiondeOrdenes.entity.repositories.CarritoItemRepository;
+import SistemadeGestiondeOrdenes.entity.repositories.OrdenItemRepository;
 import SistemadeGestiondeOrdenes.entity.services.ProductoService;
 import SistemadeGestiondeOrdenes.entity.services.CategoriaService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,8 @@ public class ProductoServiceImpl implements ProductoService {
 
     private final ProductoRepository productoRepository;
     private final ProductoImagenRepository productoImagenRepository;
+    private final CarritoItemRepository carritoItemRepository;
+    private final OrdenItemRepository ordenItemRepository;
     private final CategoriaService categoriaService;
 
     @Override
@@ -107,8 +111,17 @@ public class ProductoServiceImpl implements ProductoService {
     @Override
     public void eliminar(Long id) {
         Producto producto = obtenerEntidadPorId(id);
-        producto.setActivo(false);
-        productoRepository.save(producto);
+        
+        // Verificar si el producto está en alguna orden
+        if (ordenItemRepository.existsByProductoId(id)) {
+            throw new RuntimeException("No se puede eliminar el producto porque está asociado a órdenes existentes");
+        }
+        
+        // Eliminar el producto de todos los carritos donde esté
+        carritoItemRepository.deleteByProductoId(id);
+        
+        // Eliminar el producto físicamente (las imágenes se eliminan por cascade)
+        productoRepository.delete(producto);
     }
 
     @Override
