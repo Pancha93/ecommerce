@@ -94,18 +94,6 @@ INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
 SELECT 2, 'Gestionar Ordenlaboratorio'
     WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Gestionar Ordenlaboratorio');
 
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Tienda'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Tienda' AND tipo_objeto_id=2);
-
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Carrito'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Carrito' AND tipo_objeto_id=2);
-
-INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
-SELECT 2, 'Mis Órdenes'
-    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Mis Órdenes' AND tipo_objeto_id=2);
-
 -- =====================================================
 -- ACCION_OBJETO (RELACIÓN)
 -- =====================================================
@@ -114,17 +102,6 @@ SELECT a.id, o.id
 FROM accion a
          JOIN objeto o ON o.nombre_objeto='Ordenlaboratorio'
 WHERE a.nombre IN ('save','findAll','update','deleteById')
-  AND NOT EXISTS (
-    SELECT 1 FROM accion_objeto ao
-    WHERE ao.accion_id=a.id AND ao.objeto_id=o.id
-);
-
--- Relaciones para opciones de menú del ecommerce
-INSERT INTO accion_objeto (accion_id, objeto_id)
-SELECT a.id, o.id
-FROM accion a
-         JOIN objeto o ON o.nombre_objeto IN ('Tienda', 'Carrito', 'Mis Órdenes')
-WHERE a.nombre = 'ver'
   AND NOT EXISTS (
     SELECT 1 FROM accion_objeto ao
     WHERE ao.accion_id=a.id AND ao.objeto_id=o.id
@@ -145,35 +122,6 @@ WHERE NOT EXISTS (
 -- =====================================================
 -- PRIVILEGIOS CLIENTE (NEGADOS)
 -- =====================================================
--- Privilegios autorizados para opciones de menú del ecommerce (CLIENTE)
-INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
-SELECT true, ao.id, r.id, null
-FROM accion_objeto ao
-         JOIN accion a ON a.id = ao.accion_id
-         JOIN objeto o ON o.id = ao.objeto_id
-         JOIN rol r ON r.nombre='CLIENTE'
-WHERE a.nombre = 'ver'
-  AND o.nombre_objeto IN ('Tienda', 'Carrito', 'Mis Órdenes')
-  AND NOT EXISTS (
-    SELECT 1 FROM privilegio p
-    WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
-);
-
--- Privilegios autorizados para opciones de menú del ecommerce (ADMINISTRADOR)
-INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
-SELECT true, ao.id, r.id, null
-FROM accion_objeto ao
-         JOIN accion a ON a.id = ao.accion_id
-         JOIN objeto o ON o.id = ao.objeto_id
-         JOIN rol r ON r.nombre='ADMINISTRADOR'
-WHERE a.nombre = 'ver'
-  AND o.nombre_objeto IN ('Tienda', 'Carrito', 'Mis Órdenes')
-  AND NOT EXISTS (
-    SELECT 1 FROM privilegio p
-    WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
-);
-
--- Privilegios negados para el resto
 INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
 SELECT false, ao.id, r.id, null
 FROM accion_objeto ao
@@ -182,21 +130,6 @@ WHERE NOT EXISTS (
     SELECT 1 FROM privilegio p
     WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
 );
-
--- =====================================================
--- OPCIONES DE MENÚ
--- =====================================================
-INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
-SELECT 'Ecommerce', 'Tienda', 'shopping_cart', '/pages/tienda', 'Tienda', 1
-    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='Tienda');
-
-INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
-SELECT 'Ecommerce', 'Carrito', 'shopping_basket', '/pages/carrito', 'Carrito', 2
-    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='Carrito');
-
-INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
-SELECT 'Ecommerce', 'Mis Órdenes', 'receipt_long', '/pages/mis-ordenes', 'Mis Órdenes', 3
-    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='Mis Órdenes');
 
 -- =====================================================
 -- EMAIL CONFIG
@@ -272,3 +205,101 @@ SELECT 'Java Programming Book', 'Guía completa de programación Java para princ
 FROM categoria c
 WHERE c.nombre='Libros'
   AND NOT EXISTS (SELECT 1 FROM producto WHERE sku='BOOK-JAVA-001');
+
+-- =====================================================
+-- OBJETOS MENU ECOMMERCE
+-- =====================================================
+INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
+SELECT 2, 'E-commerce'
+    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='E-commerce' AND tipo_objeto_id=2);
+
+INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
+SELECT 2, 'Tienda'
+    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Tienda' AND tipo_objeto_id=2);
+
+INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
+SELECT 2, 'Mi Carrito'
+    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Mi Carrito' AND tipo_objeto_id=2);
+
+INSERT INTO objeto (tipo_objeto_id, nombre_objeto)
+SELECT 2, 'Mis Órdenes'
+    WHERE NOT EXISTS (SELECT 1 FROM objeto WHERE nombre_objeto='Mis Órdenes' AND tipo_objeto_id=2);
+
+-- =====================================================
+-- ACCION_OBJETO PARA OPCIONES MENU ECOMMERCE
+-- =====================================================
+INSERT INTO accion_objeto (accion_id, objeto_id)
+SELECT a.id, o.id
+FROM accion a
+         JOIN objeto o ON o.nombre_objeto IN (
+                                               'E-commerce',
+                                               'Tienda',
+                                               'Mi Carrito',
+                                               'Mis Órdenes'
+    ) AND o.tipo_objeto_id=2
+WHERE a.nombre='ver'
+  AND NOT EXISTS (
+    SELECT 1 FROM accion_objeto ao
+    WHERE ao.accion_id=a.id AND ao.objeto_id=o.id
+);
+
+-- =====================================================
+-- OPCIONES MENÚ ECOMMERCE (Solo secciones públicas)
+-- =====================================================
+-- Sección E-commerce
+INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
+SELECT 'E-commerce', NULL, NULL, NULL, 'E-commerce', 20
+    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='E-commerce');
+
+INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
+SELECT NULL, 'Tienda', 'shopping_cart', '/tienda', 'Tienda', 21
+    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='Tienda');
+
+INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
+SELECT NULL, 'Mi Carrito', 'shopping_bag', '/carrito', 'Mi Carrito', 22
+    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='Mi Carrito');
+
+INSERT INTO opcion_menu (nav_cap, display_name, icon_name, route, nombreobjeto, orden)
+SELECT NULL, 'Mis Órdenes', 'receipt_long', '/mis-ordenes', 'Mis Órdenes', 23
+    WHERE NOT EXISTS (SELECT 1 FROM opcion_menu WHERE nombreobjeto='Mis Órdenes');
+
+-- =====================================================
+-- PRIVILEGIOS PARA OPCIONES ECOMMERCE
+-- =====================================================
+-- Privilegios para ADMINISTRADOR
+INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
+SELECT true, ao.id, r.id, null
+FROM accion_objeto ao
+         JOIN objeto o ON o.id = ao.objeto_id
+         JOIN accion a ON a.id = ao.accion_id
+         JOIN rol r ON r.nombre='ADMINISTRADOR'
+WHERE o.nombre_objeto IN (
+                          'E-commerce',
+                          'Tienda',
+                          'Mi Carrito',
+                          'Mis Órdenes'
+    )
+  AND a.nombre='ver'
+  AND NOT EXISTS (
+    SELECT 1 FROM privilegio p
+    WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
+);
+
+-- Privilegios para CLIENTE (acceso completo al ecommerce)
+INSERT INTO privilegio (autorizado, accion_objeto_id, rol_id, usuario_id)
+SELECT true, ao.id, r.id, null
+FROM accion_objeto ao
+         JOIN objeto o ON o.id = ao.objeto_id
+         JOIN accion a ON a.id = ao.accion_id
+         JOIN rol r ON r.nombre='CLIENTE'
+WHERE o.nombre_objeto IN (
+                          'E-commerce',
+                          'Tienda',
+                          'Mi Carrito',
+                          'Mis Órdenes'
+    )
+  AND a.nombre='ver'
+  AND NOT EXISTS (
+    SELECT 1 FROM privilegio p
+    WHERE p.accion_objeto_id=ao.id AND p.rol_id=r.id
+);

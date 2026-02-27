@@ -81,6 +81,42 @@ public class PermisoInterceptor implements HandlerInterceptor {
             }
         }
 
+        // Endpoints que requieren rol de administrador
+        String method = request.getMethod();
+        boolean esEndpointAdmin = false;
+        
+        if ((method.equals("GET") && requestURI.equals("/api/productos"))
+                || (method.equals("POST") && requestURI.equals("/api/productos"))
+                || (method.equals("PUT") && requestURI.matches("^/api/productos/[0-9]+$"))
+                || (method.equals("DELETE") && requestURI.matches("^/api/productos/[0-9]+$"))
+                || (method.equals("PATCH") && requestURI.matches("^/api/ordenes/[0-9]+/estado$"))
+                || (method.equals("GET") && requestURI.equals("/api/ordenes/todas"))) {
+            esEndpointAdmin = true;
+        }
+
+        if (esEndpointAdmin) {
+            String token = jwtTokenService.extractJwtFromRequest(request);
+            if (token == null || token.isEmpty()) {
+                return enviarError(response, HttpServletResponse.SC_UNAUTHORIZED, "No se envió el token correctamente.");
+            }
+            try {
+                Date expiration = jwtTokenService.obtenerExpiration(token);
+                if (expiration.before(new Date())) {
+                    return enviarError(response, HttpServletResponse.SC_UNAUTHORIZED, "El token ha expirado.");
+                }
+                
+                // Verificar que el usuario es administrador
+                boolean tieneRolNoAdministrador = (boolean) jwtTokenService.extractAllClaims(token).get("tieneRolNoAdministrador");
+                if (tieneRolNoAdministrador) {
+                    return enviarError(response, HttpServletResponse.SC_FORBIDDEN, "Acceso denegado. Se requieren permisos de administrador.");
+                }
+                
+                return true;
+            } catch (Exception e) {
+                return enviarError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error al validar token: " + e.getMessage());
+            }
+        }
+
         // Endpoints protegidos del ecommerce - requieren autenticación pero no headers Accion/Objeto
         if (requestURI.startsWith("/api/carrito") 
                 || requestURI.startsWith("/api/ordenes") 
